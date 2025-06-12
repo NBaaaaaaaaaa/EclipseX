@@ -4,6 +4,7 @@
 
 #include "hooks.h"
 #include "prototypes.h"
+#include "c2/commands/system_info/system_info.h"
 
 struct ftrace_hook {
 	const char *name;
@@ -188,14 +189,42 @@ static void fh_remove_hook(struct ftrace_hook *hook)
 	}
 }
 
+// вынести повторы
 static int get_addr(void) {
 	real_getname = (struct filename *(*)(const char __user *))real_kallsyms_lookup_name("getname");
 	if (!real_getname) {
 		pr_err("Failed to resolve real_getname\n");
 		return -ENOENT;
 	}
-
 	pr_info("Get addr getname\n");
+
+	real_block_class = (struct class *)real_kallsyms_lookup_name("block_class");
+	if (!real_block_class) {
+		pr_err("Failed to resolve real_getname\n");
+		return -ENOENT;
+	}
+	pr_info("Get addr block_class\n");
+
+	real_input_dev_list = (struct list_head *)real_kallsyms_lookup_name("input_dev_list");
+	if (!real_input_dev_list) {
+		pr_err("Failed to resolve real_input_dev_list\n");
+		return -ENOENT;
+	}
+	pr_info("Get addr input_dev_list\n");
+
+	real_input_mutex = (spinlock_t *)real_kallsyms_lookup_name("input_mutex");
+	if (!real_input_mutex) {
+		pr_err("Failed to resolve real_input_mutex\n");
+		return -ENOENT;
+	}
+	pr_info("Get addr input_mutex\n");
+
+	real_si_swapinfo = (void *)real_kallsyms_lookup_name("si_swapinfo");
+	if (!real_si_swapinfo) {
+		pr_err("Failed to resolve real_si_swapinfo\n");
+		return -ENOENT;
+	}
+	pr_info("Get addr si_swapinfo\n");
 
 	return 0;
 }

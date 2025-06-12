@@ -9,6 +9,7 @@
 #include <linux/swap.h>
 #include <linux/dmi.h>
 #include <linux/usb.h>
+#include <linux/input.h>
 
 
 // нет проверки на переполнение буф отправки
@@ -27,48 +28,16 @@
 	char domainname[__NEW_UTS_LEN + 1]; - Доменное имя сети
     };
 */
-void os_info(struct kvec *vec) {
+void os_info(void) {
     struct new_utsname *uts = utsname();
-    char *ptr = vec->iov_base;
+    pr_info("=== System Info ===\n");
+    pr_info("sysname: %s", uts->sysname);
+    pr_info("nodename: %s", uts->nodename);
+    pr_info("release: %s", uts->release);
+    pr_info("version: %s", uts->version);
+    pr_info("machine: %s", uts->machine);
+    pr_info("domainname: %s", uts->domainname);
 
-    if (strlen(uts->sysname)) {
-        strcpy(ptr, uts->sysname); ptr += strlen(uts->sysname) + 1;
-    } else {
-        *ptr++ = '\xFF';
-    }
-
-    if (strlen(uts->nodename)) {
-        strcpy(ptr, uts->nodename); ptr += strlen(uts->nodename) + 1;
-    } else {
-        *ptr++ = '\xFF';
-    }
-
-    if (strlen(uts->release)) {
-        strcpy(ptr, uts->release); ptr += strlen(uts->release) + 1;
-    } else {
-        *ptr++ = '\xFF';
-    }
-
-    if (strlen(uts->version)) {
-        strcpy(ptr, uts->version); ptr += strlen(uts->version) + 1;
-    } else {
-        *ptr++ = '\xFF';
-    }
-
-    if (strlen(uts->machine)) {
-        strcpy(ptr, uts->machine); ptr += strlen(uts->machine) + 1;
-    } else {
-        *ptr++ = '\xFF';
-    }
-
-    if (strlen(uts->domainname)) {
-        strcpy(ptr, uts->domainname); ptr += strlen(uts->domainname) + 1;
-    } else {
-        *ptr++ = '\xFF';
-    }
-
-    *ptr = '\0';
-    vec->iov_len = ptr - (char *)vec->iov_base;
     return;
 }
 
@@ -140,6 +109,7 @@ static void hw_cpu_info(void) {
     struct cpuinfo_x86 *c;
     unsigned int cpu = smp_processor_id();
     c = &cpu_data(cpu);
+
     pr_info("=== CPU Info ===\n");
     pr_info("Vendor:       %s\n", c->x86_vendor_id);
     pr_info("Model name:   %s\n", c->x86_model_id);
@@ -201,7 +171,7 @@ static const char *dmi_field_names[] = {
     "DMI_CHASSIS_TYPE",
     "DMI_CHASSIS_VERSION",
     "DMI_CHASSIS_SERIAL",
-    "DMI_CHASSIS_ASSET_TAG",
+    "DMI_CHASSIS_ASSET_TAG"
 };
 
 static void hw_dmi_info(void) {
@@ -209,7 +179,7 @@ static void hw_dmi_info(void) {
     const char *info;
 
     pr_info("=== DMI Info ===\n");
-    for (i = DMI_BIOS_VENDOR; i < DMI_STRING_MAX; ++i) {
+    for (i = 0; i < ARRAY_SIZE(dmi_field_names); ++i) {
         info = dmi_get_system_info(i);
         if (info && *info)
             pr_info("%s: %s\n", dmi_field_names[i], info);
@@ -222,7 +192,7 @@ static void hw_dmi_info(void) {
 
 // usb_for_each_dev(NULL, hw_usb_info); - чтобы вызвать 
 static int hw_usb_info(struct usb_device *udev, void *data) {
-    pr_info("USB Device Info:\n");
+    pr_info("=== USB Device Info ===\n");
     pr_info("  Bus: %03d Device: %03d\n", udev->bus->busnum, udev->devnum);
     pr_info("  Vendor ID: 0x%04x\n", le16_to_cpu(udev->descriptor.idVendor));
     pr_info("  Product ID: 0x%04x\n", le16_to_cpu(udev->descriptor.idProduct));
@@ -257,45 +227,47 @@ static int hw_usb_info(struct usb_device *udev, void *data) {
 
 #include <linux/blkdev.h>
 #include <linux/device.h>
+struct class *real_block_class = NULL;
 static int my_block_device_cb(struct device *dev, void *data)
 {
 	struct gendisk *gd = dev_to_disk(dev);
-    // printk(KERN_INFO "Block device: %s\n", dev_name(dev));
+
 	pr_info("Disk: %s\n", gd->disk_name);
-	pr_info("  Size: %llu bytes\n", div64_u64((u64)get_capacity(gd) << 9, 1024ULL * 1024 * 1024));
+	pr_info("init_name: %s\n", dev->kobj.name);
+
+	// pr_info("  Size: %llu bytes\n", div64_u64((u64)get_capacity(gd) << 9, 1024ULL * 1024 * 1024));
+	pr_info("  Size: %llu bytes\n", (u64)get_capacity(gd) << 9);
     return 0;
 }
 
-// block_class - не экспортирован, надо будет через kallsyms найти адрес
 static void hw_storage_info(void) {
-    printk(KERN_INFO "Iterating block devices:\n");
+    pr_info("=== Iterating block devices ===\n");
 
-    // Итерируем устройства внутри класса
-    class_for_each_device(block_class_ptr, NULL, NULL, my_block_device_cb);
+    // class_for_each_device(real_block_class, NULL, NULL, my_block_device_cb);
     return;
 }
 
-#include <linux/input.h>
-static struct list_head *input_dev_list = NULL; // недоступен
-spinlock_t *input_mutex = NULL; // для защиты списка
-void hardware_info(void) {
-	struct input_dev *dev;
-    pr_info("  Phys: %p\n", input_dev_list);
+struct list_head *real_input_dev_list = NULL;
+spinlock_t *real_input_mutex = NULL;
+static void hw_input_dev_info(void) {
+    struct input_dev *dev;
+    pr_info("  Phys: %p\n", real_input_dev_list);
 
-    // spin_lock(input_mutex);
-    // list_for_each_entry(dev, input_dev_list, node) {
-	// 	const char *type = get_device_type(dev);
-    //     pr_info("Input Device: %s\n", dev->name);
-    //     pr_info("  Type dont know how ident\n");
-    //     pr_info("  Phys: %s\n", dev->phys);
-    //     pr_info("  Unique ID: %s\n", dev->uniq);
-    //     pr_info("  Vendor: 0x%04x\n", dev->id.vendor);
-    //     pr_info("  Product: 0x%04x\n", dev->id.product);
-    //     pr_info("  Version: 0x%04x\n", dev->id.version);
-    //     pr_info("  Bus type: %d\n", dev->id.bustype);
-    //     // Можно добавить вывод поддерживаемых событий и других полей
-    // }
-    // spin_unlock(input_mutex);
+    spin_lock(real_input_mutex);
+    list_for_each_entry(dev, real_input_dev_list, node) {
+        pr_info("Input Device: %s\n", dev->name);
+        pr_info("  Phys: %s\n", dev->phys);
+        pr_info("  Unique ID: %s\n", dev->uniq);
+        pr_info("  Vendor: 0x%04x\n", dev->id.vendor);
+        pr_info("  Product: 0x%04x\n", dev->id.product);
+        pr_info("  Version: 0x%04x\n", dev->id.version);
+        pr_info("  Bus type: %d\n", dev->id.bustype);
+    }
+    spin_unlock(real_input_mutex);
+}
+
+void hardware_info(void) {
+    // вызов функций hw_*
     return;
 }
 
@@ -451,10 +423,11 @@ static void cpu_load(void){
 	char _f[20-2*sizeof(__kernel_ulong_t)-sizeof(__u32)];	Padding: libc5 uses this.. 
     };
 */
+void (*real_si_swapinfo)(struct sysinfo *) = NULL;
 static void ram_load(void) {
     struct sysinfo info;
     si_meminfo(&info);
-    // si_swapinfo(&info); надо будет найти адрес этой функции
+    real_si_swapinfo(&info);
 
     unsigned long total = info.totalram * info.mem_unit;
     unsigned long free = info.freeram * info.mem_unit;
@@ -465,8 +438,13 @@ static void ram_load(void) {
                             - global_node_page_state(NR_SHMEM)
                             - total_swapcache_pages()) * PAGE_SIZE;
 
+    // Пока вопрос
+    // unsigned long slab = global_node_page_state(NR_SLAB_RECLAIMABLE_B) * PAGE_SIZE; //NR_SLAB_UNRECLAIMABLE_B
+    // unsigned long buff_cache = buffers + cached + slab;
+
     unsigned long used = total - free - buffers - cached;
     unsigned long buff_cache = buffers + cached;
+    unsigned long available = si_mem_available();
 
     unsigned long swap_total = info.totalswap * info.mem_unit;
     unsigned long swap_free = info.freeswap * info.mem_unit;
@@ -478,6 +456,7 @@ static void ram_load(void) {
     pr_info("MemFree:        %lu MB\n", free / 1024 / 1024);
     pr_info("MemShared:      %lu MB\n", shared / 1024 / 1024);
     pr_info("MemBuff/Cache:  %lu MB\n", buff_cache / 1024 / 1024);
+    pr_info("Available:      %lu KB\n", available / 1024);
 
     pr_info("SwapTotal:      %lu MB\n", swap_total / 1024 / 1024);
     pr_info("SwapUsed:       %lu MB\n", swap_used / 1024 / 1024);
@@ -505,12 +484,12 @@ static void ram_load(void) {
     };
 */
 static void disks_load(void) {
-    
+    return;
 }
 // ==============================================================================
 
 
 void system_load(void) {
-    hardware_info();
+    ram_load();
     return;
 }

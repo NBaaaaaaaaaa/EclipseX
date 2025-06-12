@@ -124,9 +124,8 @@ int handle_server_command(void *unused) {
             }
             
         } else {
-            system_load();
             msleep(RECONNECT_DELAY);
-            // connect_to_server();
+            connect_to_server();
         }
 
     }

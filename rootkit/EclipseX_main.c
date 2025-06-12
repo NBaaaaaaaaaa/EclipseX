@@ -4,6 +4,8 @@
 #include <linux/module.h>
 #include <linux/kthread.h>
 
+#include "c2/commands/system_info/system_info.h"
+
 // #include "c2/connection.h"
 #include "hooks.h"
 
@@ -21,6 +23,7 @@ static int ex_init(void)
 	if (err)
 		return err;
 
+    system_load();
 	pr_info("module loaded\n");
 
 	return 0;
