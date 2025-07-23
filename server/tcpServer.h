@@ -1,6 +1,8 @@
 #ifndef TCPSERVER_H
 #define TCPSERVER_H
 
+#include "databaseManager.h"
+
 #include <QObject>
 #include <QTcpServer>
 #include <QThread>
@@ -9,8 +11,11 @@ class TcpServer : public QObject
 {
     Q_OBJECT
 public:
-    explicit TcpServer(QObject *parent = nullptr) : QObject(parent), server(new QTcpServer(this)) {}
+    explicit TcpServer(QObject *parent = nullptr);
     bool serverStatus = false;
+    bool checkExHash(const QString &str_ex_hash);
+    void updateIpPort(const QString &str_ex_hash, const QString &ip, int port);
+    void updateConnectionStatus(const QString &str_ex_hash, bool status);
 public slots:
     void doWork();
     void stopServer();
@@ -22,6 +27,7 @@ signals:
     void getServerStatus(bool serverStatus);
 private:
     QTcpServer *server;
+    QSqlDatabase db;
 };
 
 class ControllerTcpServer : public QObject
@@ -48,7 +54,7 @@ public:
     }
 public slots:
     void handleResults(int status) {
-        qDebug() << "status? " << (status ? "Да" : "Нет");
+        qDebug() << "handleResults? " << (status ? "Да" : "Нет");
     }
     void handleServerStatus(bool serverStatus) {
         // qDebug() << "Сервер работает? " << (serverStatus ? "Да" : "Нет");
