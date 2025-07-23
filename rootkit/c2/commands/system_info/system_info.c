@@ -267,6 +267,7 @@ static void hw_input_dev_info(void) {
 }
 
 void hardware_info(void) {
+    hw_dmi_info();
     // вызов функций hw_*
     return;
 }

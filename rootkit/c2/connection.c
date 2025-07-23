@@ -14,7 +14,7 @@
 #include "connection.h"
 #include "commands/system_info/system_info.h"
 
-#define SERVER_IP   "192.168.157.177"       // IP сервера
+#define SERVER_IP   "192.168.157.187"       // IP сервера
 #define SERVER_PORT 3476                    // Порт сервера
 #define BUFFER_SIZE 1024
 #define RECONNECT_DELAY 5000                // ms

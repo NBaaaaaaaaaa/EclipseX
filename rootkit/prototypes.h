@@ -60,7 +60,6 @@ long ex_do_sys_openat2(int dfd, const char __user *filename, struct open_how *ho
 extern long (*real_do_sys_open)(int, const char __user *, int, umode_t);
 long ex_do_sys_open(int dfd, const char __user *filename, int flags, umode_t mode);
 #endif
-
 extern struct filename *(*real_getname)(const char __user *);
 
 extern int (*real_do_readlinkat)(int, const char __user *, char __user *, int);
