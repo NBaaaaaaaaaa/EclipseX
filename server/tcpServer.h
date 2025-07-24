@@ -1,33 +1,33 @@
 #ifndef TCPSERVER_H
 #define TCPSERVER_H
-
-#include "databaseManager.h"
-
+#include "clientHandler.h"
 #include <QObject>
 #include <QTcpServer>
 #include <QThread>
+#include <QMutex>
 
-class TcpServer : public QObject
+class TcpServer : public QTcpServer
 {
     Q_OBJECT
 public:
     explicit TcpServer(QObject *parent = nullptr);
     bool serverStatus = false;
-    bool checkExHash(const QString &str_ex_hash);
-    void updateIpPort(const QString &str_ex_hash, const QString &ip, int port);
-    void updateConnectionStatus(const QString &str_ex_hash, bool status);
 public slots:
     void doWork();
     void stopServer();
     void checkStatus() {
-        emit getServerStatus(server->isListening());
+        emit getServerStatus(isListening());
     }
+private slots:
+    void clientFinished(ClientHandler *handler);
 signals:
     void resultReady(int status);
     void getServerStatus(bool serverStatus);
+protected:
+    void incomingConnection(qintptr socketDescriptor) override;
 private:
-    QTcpServer *server;
-    QSqlDatabase db;
+    QList<ClientHandler*> clientHandlers;
+    QMutex mutex;
 };
 
 class ControllerTcpServer : public QObject
@@ -65,5 +65,4 @@ signals:
     void checkServerStatus();
     void serverStatusReceived(bool serverStatus);
 };
-
 #endif // TCPSERVER_H

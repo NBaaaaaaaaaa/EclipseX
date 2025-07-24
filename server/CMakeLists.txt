@@ -35,6 +35,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         connection.h connection.cpp
         db.h db.cpp
         tcpServer.h tcpServer.cpp
+        clientHandler.h clientHandler.cpp
 
     )
 # Define target properties for Android with Qt 6 as:
