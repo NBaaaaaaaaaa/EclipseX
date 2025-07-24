@@ -3,15 +3,12 @@
 #include <QVBoxLayout>
 #include <QTextBrowser>
 
-Info::Info(QWidget *parent)
-    : QWidget{parent}
+Info::Info(QWidget *parent) : QWidget{parent}
 {
-    QVBoxLayout *mainLayout = new QVBoxLayout(this);
-
     QTextBrowser *infoTextViewer = new QTextBrowser(this);
     infoTextViewer->setReadOnly(true);
-    infoTextViewer->setOpenExternalLinks(true);  // Разрешить открытие ссылок
-    infoTextViewer->setTextInteractionFlags(Qt::TextBrowserInteraction); // Включает взаимодействие (клик по ссылке и т.д.)
+    infoTextViewer->setOpenExternalLinks(true);                             // Разрешить открытие ссылок
+    infoTextViewer->setTextInteractionFlags(Qt::TextBrowserInteraction);    // Включает взаимодействие (клик по ссылке и т.д.)
 
     QString html = R"(
 <b>EclipseX</b> — исследовательский проект.<br>
@@ -22,7 +19,7 @@ Info::Info(QWidget *parent)
 
     infoTextViewer->setHtml(html);  // Устанавливаем HTML-текст
 
+    QVBoxLayout *mainLayout = new QVBoxLayout(this);
     mainLayout->addWidget(infoTextViewer, 1);
-
     mainLayout->addStretch();
 }

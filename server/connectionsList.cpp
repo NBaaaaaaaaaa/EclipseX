@@ -13,11 +13,8 @@
 #include <QJsonDocument>
 #include <QFile>
 
-ConnectionsList::ConnectionsList(QWidget *parent)
-    : QWidget{parent}
+ConnectionsList::ConnectionsList(QWidget *parent) : QWidget{parent}
 {
-
-    QVBoxLayout *mainLayout = new QVBoxLayout(this);
     QSqlDatabase db = DatabaseManager::instance().database();
     QSqlQuery query(db);
 
@@ -27,7 +24,7 @@ ConnectionsList::ConnectionsList(QWidget *parent)
     } else {
         if (query.next()) {
             count = query.value(0).toInt();
-            qDebug() << "Количество записей:" << count;
+            // qDebug() << "Количество записей:" << count;
         }
     }
 
@@ -48,6 +45,7 @@ ConnectionsList::ConnectionsList(QWidget *parent)
         }
     }
 
+    QVBoxLayout *mainLayout = new QVBoxLayout(this);
     mainLayout->addWidget(connectionsListWidget, 1);
     mainLayout->addStretch();
 }

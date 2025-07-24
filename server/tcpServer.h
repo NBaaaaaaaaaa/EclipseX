@@ -45,7 +45,6 @@ public:
         connect(this, &ControllerTcpServer::checkServerStatus, tcpServer, &TcpServer::checkStatus);
         connect(tcpServer, &TcpServer::getServerStatus, this, &ControllerTcpServer::handleServerStatus);
 
-
         tcpServerThread.start();
     }
     ~ControllerTcpServer() {
@@ -54,7 +53,7 @@ public:
     }
 public slots:
     void handleResults(int status) {
-        qDebug() << "handleResults? " << (status ? "Да" : "Нет");
+        qDebug() << "handleResults " << status;
     }
     void handleServerStatus(bool serverStatus) {
         // qDebug() << "Сервер работает? " << (serverStatus ? "Да" : "Нет");

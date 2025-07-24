@@ -16,7 +16,7 @@ public:
 private slots:
     void toggleConnection();
 private:
-    bool isCollapsed = false;
+    bool isCollapsed = true;
     QPushButton *btnToggle;
     QWidget *hideWidget;
     QListWidgetItem *listItem = nullptr;

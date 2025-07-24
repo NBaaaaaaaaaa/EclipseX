@@ -16,12 +16,12 @@ MainWindow::MainWindow(QWidget *parent)
     ProgramMenu *programMenu = new ProgramMenu(this);
     Content *content = new Content(this);
 
-    QHBoxLayout *layout = new QHBoxLayout;
-    layout->addWidget(programMenu);
-    layout->addWidget(content, 1);  // растягивается
+    QHBoxLayout *mainLayout = new QHBoxLayout;
+    mainLayout->addWidget(programMenu);
+    mainLayout->addWidget(content, 1);  // растягивается
 
     QWidget *central = new QWidget(this);
-    central->setLayout(layout);
+    central->setLayout(mainLayout);
     setCentralWidget(central);
     resize(1300, 600);
 

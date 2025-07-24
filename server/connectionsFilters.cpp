@@ -16,17 +16,15 @@ ConnectionsFilters::ConnectionsFilters(QWidget *parent) : QFrame(parent) {
     this->setFixedWidth(MAX_WIDTH);
     // this->setStyleSheet("background-color: #3498db;");
     this->setFrameShape(QFrame::Box);
-    QVBoxLayout *mainLayout = new QVBoxLayout(this);
 
     // Header
-    QHBoxLayout *headLayout = new QHBoxLayout;
     filtersLabel = new QLabel("Filters");
-    headLayout->addWidget(filtersLabel);
     btnToggle = new QPushButton("←");
     connect(btnToggle, &QPushButton::clicked, this, &ConnectionsFilters::toggleFilters);
-    headLayout->addWidget(btnToggle);
 
-    mainLayout->addLayout(headLayout);
+    QHBoxLayout *headLayout = new QHBoxLayout;
+    headLayout->addWidget(filtersLabel);
+    headLayout->addWidget(btnToggle);
 
     // Text for collapsed
     textCollapsedWidget = new QWidget(this);
@@ -40,26 +38,21 @@ ConnectionsFilters::ConnectionsFilters(QWidget *parent) : QFrame(parent) {
     textCollapsedLayout->addWidget(new QLabel("S"));
     textCollapsedWidget->setVisible(isCollapsed);
 
-    mainLayout->addWidget(textCollapsedWidget);
-
     // Filter Connection Status
     QWidget *connectionStatusWidget = new QWidget(this);
-    QVBoxLayout *connectionStatusLayout = new QVBoxLayout(connectionStatusWidget);
+
     QPushButton *btnConnectionStatus = new QPushButton("↓ Connection Status");
 
-    connectionStatusLayout->addWidget(btnConnectionStatus);
-
     QWidget *connectionStatusContentWidget = new QWidget(connectionStatusWidget);
-    QVBoxLayout *connectionStatusContentLayout = new QVBoxLayout(connectionStatusContentWidget);
     isOnline = new QCheckBox("Online");
     isOffline = new QCheckBox("Offline");
     isOnline->setChecked(true);
     isOffline->setChecked(true);
+
+    QVBoxLayout *connectionStatusContentLayout = new QVBoxLayout(connectionStatusContentWidget);
     connectionStatusContentLayout->addWidget(isOnline);
     connectionStatusContentLayout->addWidget(isOffline);
     connectionStatusContentWidget->setVisible(isVisConStatF);
-
-    connectionStatusLayout->addWidget(connectionStatusContentWidget);
 
     connect(btnConnectionStatus, &QPushButton::clicked, this, [=]() {
         isVisConStatF = !isVisConStatF;
@@ -74,16 +67,23 @@ ConnectionsFilters::ConnectionsFilters(QWidget *parent) : QFrame(parent) {
     });
 
     filtersWidgets.append(connectionStatusWidget);
-    mainLayout->addWidget(connectionStatusWidget);
+
+    QVBoxLayout *connectionStatusLayout = new QVBoxLayout(connectionStatusWidget);
+    connectionStatusLayout->addWidget(btnConnectionStatus);
+    connectionStatusLayout->addWidget(connectionStatusContentWidget);
 
     // Apply button
     btnApplyFilters = new QPushButton("Apply");
     connect(btnApplyFilters, &QPushButton::clicked, this, &ConnectionsFilters::onApplyButtonClicked);
+
+    QVBoxLayout *mainLayout = new QVBoxLayout(this);
+    mainLayout->addLayout(headLayout);
+    mainLayout->addWidget(textCollapsedWidget);
+    mainLayout->addWidget(connectionStatusWidget);
     mainLayout->addWidget(btnApplyFilters);
-
     mainLayout->addStretch();
-    emit toggleFilters();
 
+    emit toggleFilters();
 }
 
 void ConnectionsFilters::toggleFilters() {

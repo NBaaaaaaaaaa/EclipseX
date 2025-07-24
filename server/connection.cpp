@@ -11,10 +11,8 @@
 
 Connection::Connection(const QString &str_ex_hash, QWidget *parent) : QFrame(parent) {
     this->setFrameShape(QFrame::Box);
-    QVBoxLayout *mainLayout = new QVBoxLayout(this);
 
     QWidget *headWidget = new QWidget(this);
-    QHBoxLayout *headLayout = new QHBoxLayout(headWidget);
 
     QCheckBox *pickConnectionBox = new QCheckBox(this);
 
@@ -55,7 +53,7 @@ Connection::Connection(const QString &str_ex_hash, QWidget *parent) : QFrame(par
     if (query.exec() && query.next()) {
         ip = query.value(0).toString();
         port = query.value(1).toInt();
-        qDebug() << "IP:" << ip << "Port:" << port;
+        // qDebug() << "IP:" << ip << "Port:" << port;
     } else {
         qDebug() << "Нет результатов.";
     }
@@ -70,6 +68,7 @@ Connection::Connection(const QString &str_ex_hash, QWidget *parent) : QFrame(par
     btnToggle = new QPushButton("↓");
     connect(btnToggle, &QPushButton::clicked, this, &Connection::toggleConnection);
 
+    QHBoxLayout *headLayout = new QHBoxLayout(headWidget);
     headLayout->addWidget(pickConnectionBox);
     headLayout->addSpacing(10);
     headLayout->addWidget(connectionStatusLabel);
@@ -81,10 +80,7 @@ Connection::Connection(const QString &str_ex_hash, QWidget *parent) : QFrame(par
 
     // Скрытые элементы
     hideWidget = new QWidget(this);
-    QFormLayout *hideLayout = new QFormLayout(hideWidget);
-
-    hideLayout->addRow("ex_hash:", new QLabel(QString("%1").arg(str_ex_hash)));
-    hideLayout->addRow(new QLabel(""));
+    hideWidget->setVisible(!isCollapsed);
 
     query.prepare("SELECT o.sysname, o.nodename, o.release, o.version, o.machine, o.domainname "
                   "FROM os_info o "
@@ -111,6 +107,9 @@ Connection::Connection(const QString &str_ex_hash, QWidget *parent) : QFrame(par
         qDebug() << "Нет результатов.";
     }
 
+    QFormLayout *hideLayout = new QFormLayout(hideWidget);
+    hideLayout->addRow("ex_hash:", new QLabel(QString("%1").arg(str_ex_hash)));
+    hideLayout->addRow(new QLabel(""));
     hideLayout->addRow(new QLabel("OS info"));
     hideLayout->addRow("  OS name:", new QLabel(QString("%1").arg(sysname)));
     hideLayout->addRow("  Hostname:", new QLabel(QString("%1").arg(nodename)));
@@ -119,11 +118,10 @@ Connection::Connection(const QString &str_ex_hash, QWidget *parent) : QFrame(par
     hideLayout->addRow("  Architecture:", new QLabel(QString("%1").arg(machine)));
     hideLayout->addRow("  Domainname:", new QLabel(QString("%1").arg(domainname)));
 
+    QVBoxLayout *mainLayout = new QVBoxLayout(this);
     mainLayout->addWidget(headWidget);
     mainLayout->addWidget(hideWidget);
     mainLayout->addStretch();
-
-    emit toggleConnection();
 }
 
 void Connection::toggleConnection() {

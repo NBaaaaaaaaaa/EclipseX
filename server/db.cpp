@@ -5,11 +5,8 @@
 #include <QVBoxLayout>
 #include <QSortFilterProxyModel>
 
-DB::DB(QWidget *parent)
-    : QWidget{parent}
+DB::DB(QWidget *parent) : QWidget{parent}
 {
-    QVBoxLayout *mainLayout = new QVBoxLayout(this);
-
     QSqlTableModel *model = new QSqlTableModel(this);
     // model->setTable("connections");
     model->setTable("host_inventory");
@@ -28,6 +25,6 @@ DB::DB(QWidget *parent)
     tableView->resizeColumnsToContents();  // Автоширина столбцов
     // tableView->resizeRowsToContents();     // Автовысота строк
 
-
+    QVBoxLayout *mainLayout = new QVBoxLayout(this);
     mainLayout->addWidget(tableView);
 }

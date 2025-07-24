@@ -14,12 +14,7 @@ Content::Content(QWidget *parent) : QFrame(parent) {
 
     ServerControlPanel *serverControlPanel = new ServerControlPanel(this);
     Connections *connections = new Connections(this);
-
     DB *db = new DB(this);
-    // QWidget *dbPageWidget = new QWidget(this);
-    // QVBoxLayout *dbLayout = new QVBoxLayout(dbPageWidget);
-    // dbLayout->addWidget(new QLabel("db"));
-
     Info *info = new Info(this);
 
     stackedWidget = new QStackedWidget(this);
@@ -29,7 +24,7 @@ Content::Content(QWidget *parent) : QFrame(parent) {
     stackedWidget->addWidget(info);
 
     QVBoxLayout *mainLayout = new QVBoxLayout(this);
-    mainLayout->addWidget(stackedWidget);
+    mainLayout->addWidget(stackedWidget, 1);
     setLayout(mainLayout);
 }
 
