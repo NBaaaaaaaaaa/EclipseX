@@ -48,6 +48,7 @@ public:
         tcpServerThread.start();
     }
     ~ControllerTcpServer() {
+        emit stopTcpServer();
         tcpServerThread.quit();
         tcpServerThread.wait();
     }

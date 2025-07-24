@@ -6,7 +6,6 @@
 #include <QLabel>
 #include <QPushButton>
 #include <QRadioButton>
-#include <QProcess>
 
 ServerControlPanel::ServerControlPanel(QWidget *parent) : QWidget{parent}
 {
@@ -83,7 +82,7 @@ ServerControlPanel::ServerControlPanel(QWidget *parent) : QWidget{parent}
     logsLayout->addWidget(new QLabel("Logs"));
     logsLayout->addWidget(logViewer, 1);        // 1 = strech factor = будет растягиваться, занимая всё доступное пространство
 
-    QProcess *tailProcess = new QProcess(this);
+    tailProcess = new QProcess(this);
     tailProcess->start("tail", QStringList() << "-n" << "0" << "-F" << "/home/user/prog/test/logfile");
     connect(tailProcess, &QProcess::readyReadStandardOutput, this, [=]() {
         QByteArray newLines = tailProcess->readAllStandardOutput();
@@ -97,4 +96,14 @@ ServerControlPanel::ServerControlPanel(QWidget *parent) : QWidget{parent}
     mainLayout->addWidget(c2MethodsWidget);
     mainLayout->addWidget(logsWidget, 1);
     mainLayout->addStretch();
+}
+
+ServerControlPanel::~ServerControlPanel() {
+    if (tailProcess->state() != QProcess::NotRunning) {
+        tailProcess->terminate();
+        if (!tailProcess->waitForFinished(2000)) {
+            tailProcess->kill();
+            tailProcess->waitForFinished();
+        }
+    }
 }
